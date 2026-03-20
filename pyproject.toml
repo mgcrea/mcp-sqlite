@@ -1,0 +1,40 @@
+[project]
+name = "mcp-sqlite"
+version = "0.1.0"
+description = "MCP tool server — read-only SQLite access for AI agents"
+requires-python = ">=3.12"
+dependencies = [
+    "mcp>=1.0.0",
+    "uvicorn>=0.32.0",
+    "starlette>=0.41.0",
+    "structlog>=24.0.0",
+]
+
+[project.scripts]
+mcp-sqlite = "mcp_sqlite.server:main"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.9.0",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mcp_sqlite"]
+
+[tool.pytest.ini_options]
+testpaths = ["src/tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "B", "W", "I"]
