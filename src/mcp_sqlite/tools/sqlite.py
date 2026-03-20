@@ -45,6 +45,12 @@ def register_sqlite_tools(mcp: FastMCP) -> None:
             try:
                 cur = conn.cursor()
                 cur.execute(query)
+
+                if cur.description is None:
+                    # Non-SELECT statement (write/DDL) — commit and report rows affected
+                    conn.commit()
+                    return f"OK — {cur.rowcount} row(s) affected"
+
                 columns = [desc[0] for desc in cur.description]
                 rows = cur.fetchall()
 
