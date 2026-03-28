@@ -1,12 +1,12 @@
 # mcp-sqlite
 
-MCP tool server — read-only SQLite access for AI agents.
+MCP tool server providing SQLite database access for AI agents.
 
 ## Tools
 
 | Tool                    | Description                          |
 | ----------------------- | ------------------------------------ |
-| `sqlite_query`          | Execute a read-only SQL SELECT query |
+| `sqlite_query`          | Execute SQL queries (read-only by default) |
 | `sqlite_list_tables`    | List all tables in the database      |
 | `sqlite_describe_table` | Get the schema/structure of a table  |
 
@@ -19,6 +19,8 @@ MCP tool server — read-only SQLite access for AI agents.
 | `MCP_PORT`        | `8080`    | HTTP server port                  |
 | `MCP_HOST`        | `0.0.0.0` | HTTP server host                  |
 | `MCP_TRANSPORT`   | `http`    | Transport mode: `http` or `stdio` |
+
+> Set `SQLITE_READONLY=false` to enable read/write mode (INSERT, UPDATE, DELETE, etc.).
 
 ## Development
 
@@ -33,6 +35,7 @@ make spec      # Run tests
 
 ## Usage with `.mcp.json`
 
+<!-- prettier-ignore -->
 ```json
 {
   "mcpServers": {
@@ -49,6 +52,7 @@ make spec      # Run tests
     }
   }
 }
+```
 
 ## Docker
 
