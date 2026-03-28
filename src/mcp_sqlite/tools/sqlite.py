@@ -85,7 +85,9 @@ def register_sqlite_tools(mcp: FastMCP) -> None:
     def _sync_sqlite_describe_table(table_name: str) -> str:
         """Synchronous SQLite describe table."""
         if not _SAFE_TABLE_NAME_RE.match(table_name):
-            return f"Error: Invalid table name '{table_name}'. Only alphanumeric characters and underscores are allowed."
+            return (
+                f"Error: Invalid table name '{table_name}'. Only alphanumeric characters and underscores are allowed."
+            )
 
         with audit_log("sqlite_describe_table", {"table_name": table_name}):
             conn = _get_connection()

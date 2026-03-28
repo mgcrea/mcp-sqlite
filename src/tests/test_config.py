@@ -1,8 +1,6 @@
 """Tests for SQLite configuration loading."""
 
-import os
-
-from mcp_sqlite.config import SqliteConfig, get_config
+from mcp_sqlite.config import get_config
 
 
 class TestSqliteConfig:

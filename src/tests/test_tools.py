@@ -17,7 +17,9 @@ def db_path():
         path = f.name
 
     conn = sqlite3.connect(path)
-    conn.execute("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT, active INTEGER DEFAULT 1)")
+    conn.execute(
+        "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT, active INTEGER DEFAULT 1)"
+    )
     conn.execute("CREATE TABLE orders (id INTEGER PRIMARY KEY, user_id INTEGER, total REAL)")
     conn.execute("INSERT INTO users (id, name, email) VALUES (1, 'Alice', 'alice@example.com')")
     conn.execute("INSERT INTO users (id, name, email) VALUES (2, 'Bob', 'bob@example.com')")
@@ -132,7 +134,9 @@ class TestSqliteQuery:
 
 class TestSqliteQueryReadWrite:
     async def test_insert_when_rw(self, rw_tools, db_path):
-        result = await rw_tools["sqlite_query"](query="INSERT INTO users (id, name, email) VALUES (4, 'Dave', 'd@e.com')")
+        result = await rw_tools["sqlite_query"](
+            query="INSERT INTO users (id, name, email) VALUES (4, 'Dave', 'd@e.com')"
+        )
         assert "OK" in result
         assert "1 row(s) affected" in result
 
