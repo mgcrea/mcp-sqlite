@@ -9,10 +9,10 @@
     <img src="https://img.shields.io/badge/ghcr.io-mgcrea%2Fmcp--sqlite-blue?style=for-the-badge" alt="docker image" />
   </a>
   <a href="https://github.com/mgcrea/mcp-sqlite">
-    <img src="https://img.shields.io/github/license/mgcrea/mcp-sqlite?style=for-the-badge" alt="license" />
+    <img src="https://img.shields.io/badge/python-3.12+-blue?style=for-the-badge" alt="python version" />
   </a>
   <a href="https://github.com/mgcrea/mcp-sqlite">
-    <img src="https://img.shields.io/badge/python-3.12+-blue?style=for-the-badge" alt="python version" />
+    <img src="https://img.shields.io/github/license/mgcrea/mcp-sqlite?style=for-the-badge" alt="license" />
   </a>
 </p>
 <!-- markdownlint-enable MD033 -->
@@ -21,11 +21,11 @@ MCP tool server providing SQLite database access for AI agents.
 
 ## Tools
 
-| Tool                    | Description                          |
-| ----------------------- | ------------------------------------ |
+| Tool                    | Description                                |
+| ----------------------- | ------------------------------------------ |
 | `sqlite_query`          | Execute SQL queries (read-only by default) |
-| `sqlite_list_tables`    | List all tables in the database      |
-| `sqlite_describe_table` | Get the schema/structure of a table  |
+| `sqlite_list_tables`    | List all tables in the database            |
+| `sqlite_describe_table` | Get the schema/structure of a table        |
 
 ## Configuration
 
