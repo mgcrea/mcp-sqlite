@@ -5,7 +5,7 @@ import sqlite3
 import tempfile
 
 import pytest
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 
 from mcp_sqlite.tools.sqlite import register_sqlite_tools
 
@@ -49,7 +49,7 @@ def tools(db_path, monkeypatch):
     monkeypatch.setenv("SQLITE_DB_PATH", db_path)
     monkeypatch.setenv("SQLITE_READONLY", "true")
 
-    mcp = FastMCP(name="test")
+    mcp = MCPServer(name="test")
     register_sqlite_tools(mcp)
 
     # Extract the sync functions from the closure for direct testing
@@ -65,7 +65,7 @@ def rw_tools(db_path, monkeypatch):
     monkeypatch.setenv("SQLITE_DB_PATH", db_path)
     monkeypatch.setenv("SQLITE_READONLY", "false")
 
-    mcp = FastMCP(name="test")
+    mcp = MCPServer(name="test")
     register_sqlite_tools(mcp)
 
     tool_map = {}
@@ -178,7 +178,7 @@ class TestSqliteListTables:
         monkeypatch.setenv("SQLITE_DB_PATH", empty_db_path)
         monkeypatch.setenv("SQLITE_READONLY", "false")
 
-        mcp = FastMCP(name="test")
+        mcp = MCPServer(name="test")
         register_sqlite_tools(mcp)
 
         tool_map = {}

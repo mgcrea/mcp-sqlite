@@ -20,26 +20,35 @@ structlog.configure(
     cache_logger_on_first_use=True,
 )
 
-from mcp.server.fastmcp import FastMCP  # noqa: E402
+from mcp.server.mcpserver import MCPServer  # noqa: E402
 from mcp.server.transport_security import TransportSecuritySettings  # noqa: E402
+from mcp_policy_guard import routes as guard_routes  # noqa: E402
 
-from .tools.sqlite import register_sqlite_tools  # noqa: E402
+from .tools.sqlite import guard, register_sqlite_tools  # noqa: E402
 
 logger = structlog.get_logger()
 
 NAME = "mcp-sqlite"
 VERSION = "0.1.0"
 
-# K8S internal service — no DNS rebinding protection needed
+# K8S internal service — no DNS rebinding protection needed.
+#
+# This must be passed explicitly, and passing nothing is NOT equivalent. On SDK 2.x
+# `streamable_http_app()` defaults `host` to "127.0.0.1", and on that default it
+# *auto-enables* rebinding protection with a localhost-only allow-list. Every request
+# reaching this pod under its real service hostname would then be answered
+# `421 Invalid Host header` — in K8S, that is every request there is.
 security_settings = TransportSecuritySettings(enable_dns_rebinding_protection=False)
 
-mcp = FastMCP(name=NAME, transport_security=security_settings, streamable_http_path="/mcp")
+# Transport options left the constructor in 2.x; they now live only on the app builders,
+# which `guard_routes` forwards to via `app_kwargs`.
+mcp = MCPServer(name=NAME, version=VERSION)
 
 register_sqlite_tools(mcp)
 logger.info("registered_sqlite_tools")
 
 
-def register_platform_resources(mcp: FastMCP) -> int:
+def register_platform_resources(mcp: MCPServer) -> int:
     """Register resources injected by the platform via MCP_RESOURCES env var.
 
     The platform serializes assigned resources as a JSON object:
@@ -85,7 +94,7 @@ def main():
     import uvicorn
     from starlette.applications import Starlette
     from starlette.responses import JSONResponse
-    from starlette.routing import Mount, Route
+    from starlette.routing import Route
 
     port = int(os.environ.get("MCP_PORT", "8080"))
     host = os.environ.get("MCP_HOST", "0.0.0.0")
@@ -101,15 +110,18 @@ def main():
         )
 
     async def root(request):
+        # Report what is actually mounted rather than a literal. `MCP_REQUIRE_AUTH` disables
+        # SSE, and the one endpoint whose job is to describe this server must not advertise a
+        # transport it does not serve.
+        transports = {"streamable-http": "/mcp"}
+        if guard.config.sse_allowed:
+            transports["sse"] = "/sse"
         return JSONResponse(
             {
                 "name": NAME,
                 "version": VERSION,
                 "protocol": "mcp",
-                "transports": {
-                    "streamable-http": "/mcp",
-                    "sse": "/sse",
-                },
+                "transports": transports,
             }
         )
 
@@ -118,17 +130,40 @@ def main():
         async with mcp.session_manager.run():
             yield
 
+    if not guard.config.sse_allowed:
+        # Under SSE the long-lived connection that carried the Authorization header is not
+        # the request that carries a tool call, so the principal established at connect time
+        # cannot be attributed to the call. Mounting it while requiring auth would leave a
+        # second, unauthenticated door onto the same tools.
+        logger.info("sse_transport_disabled", reason="MCP_REQUIRE_AUTH is enabled")
+
+    # `mcp_policy_guard.routes` wraps the MCP app rather than the whole Starlette app — Knative's
+    # readiness probe hits /healthz, and a Starlette-level middleware would demand a bearer
+    # token from the kubelet — and mounts SSE, when permitted, at its own path.
+    #
+    # It replaces a hand-built list that appended `Mount("/", app=mcp.sse_app())` after
+    # `Mount("/", app=mcp.streamable_http_app())`. Starlette returns on the first
+    # `Match.FULL` and `Mount("/")` matches every path, so that second mount was
+    # unreachable: SSE was never actually served, while `/` advertised it unconditionally.
     app = Starlette(
-        routes=[
-            Route("/healthz", healthz),
-            Route("/", root),
-            Mount("/", app=mcp.streamable_http_app()),
-            Mount("/", app=mcp.sse_app()),
-        ],
+        routes=guard_routes(
+            mcp,
+            guard.config,
+            extra_routes=[Route("/healthz", healthz), Route("/", root)],
+            app_kwargs={"transport_security": security_settings, "streamable_http_path": "/mcp"},
+            sse_app_kwargs={"transport_security": security_settings},
+        ),
         lifespan=lifespan,
     )
 
-    logger.info("starting_server", host=host, port=port)
+    logger.info(
+        "starting_server",
+        host=host,
+        port=port,
+        require_auth=guard.config.require_auth,
+        policy_enabled=guard.config.policy_enabled,
+        fail_mode=guard.config.fail_mode,
+    )
     uvicorn.run(app, host=host, port=port)
 
 

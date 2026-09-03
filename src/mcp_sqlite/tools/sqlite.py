@@ -4,7 +4,8 @@ import asyncio
 import re
 import sqlite3
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
+from mcp_policy_guard import Guard
 
 from ..audit import audit_log
 from ..config import get_config
@@ -16,8 +17,12 @@ CONNECT_TIMEOUT = 10
 # Only allow safe table names to prevent injection in PRAGMA calls
 _SAFE_TABLE_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
+# Constructed once at import and shared: it is thread-safe, and SQLite work runs in
+# `asyncio.to_thread`. `server.py` reads `guard.config` to decide which transports to mount.
+guard = Guard()
 
-def register_sqlite_tools(mcp: FastMCP) -> None:
+
+def register_sqlite_tools(mcp: MCPServer) -> None:
     """Register SQLite tools with the MCP server."""
 
     def _get_connection():
